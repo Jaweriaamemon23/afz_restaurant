@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "739896266270",
+    "project_id": "afz-restaurant",
+    "storage_bucket": "afz-restaurant.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:739896266270:android:250937c6451c65717d680f",
+        "android_client_info": {
+          "package_name": "com.example.afz_restaurant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBH30Xho5oTZ7uC665sGiCQ55cMVHHpEck"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
