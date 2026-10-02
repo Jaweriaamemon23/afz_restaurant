@@ -17,16 +17,26 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
 
   final TextEditingController _emailController = TextEditingController();
-
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  void _continueAsGuest() {
-    Navigator.pushReplacement(
+  // TEMPORARY CUSTOMER ACCESS
+  void _continueAsCustomer() {
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+      (route) => false,
+    );
+  }
+
+  // TEMPORARY ADMIN ACCESS
+  void _continueAsAdmin() {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+      (route) => false,
     );
   }
 
@@ -97,7 +107,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (role == 'Kitchen Staff') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Kitchen dashboard will be connected next.'),
+            content: Text('Kitchen dashboard will be connected later.'),
           ),
         );
         return;
@@ -107,7 +117,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (role == 'Delivery Driver') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Driver dashboard will be connected next.'),
+            content: Text('Driver dashboard will be connected later.'),
           ),
         );
         return;
@@ -337,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: TextButton(
                             onPressed: () {
                               // Firebase password reset
-                              // will be added next.
+                              // will be added later.
                             },
                             child: const Text(
                               'Forgot Password?',
@@ -412,6 +422,62 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 18),
 
+                        // CUSTOMER BUTTON
+                        SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: _continueAsCustomer,
+                            icon: const Icon(
+                              Icons.person_outline,
+                              color: Color(0xFFFF642F),
+                            ),
+                            label: const Text(
+                              'Continue as Customer',
+                              style: TextStyle(
+                                color: Color(0xFFFF642F),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFFF642F)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              backgroundColor: Colors.white.withOpacity(0.35),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // ADMIN BUTTON
+                        SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: _continueAsAdmin,
+                            icon: const Icon(
+                              Icons.admin_panel_settings_outlined,
+                              color: Color(0xFFFF642F),
+                            ),
+                            label: const Text(
+                              'Continue as Admin',
+                              style: TextStyle(
+                                color: Color(0xFFFF642F),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFFF642F)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              backgroundColor: Colors.white.withOpacity(0.35),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
                         // Create Account
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -446,36 +512,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 4),
 
-                        // Guest
-                        SizedBox(
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            onPressed: _continueAsGuest,
-                            icon: const Icon(
-                              Icons.person_outline,
-                              color: Color(0xFFFF642F),
-                            ),
-                            label: const Text(
-                              'Continue as Guest',
-                              style: TextStyle(
-                                color: Color(0xFFFF642F),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFFF642F)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              backgroundColor: Colors.white.withOpacity(0.35),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
                         Text(
-                          'Browse the menu and order without creating an account',
+                          'You can continue as Customer or Admin for now.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey.shade700,

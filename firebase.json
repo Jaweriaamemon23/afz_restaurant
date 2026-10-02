@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"afz-restaurant","appId":"1:739896266270:android:250937c6451c65717d680f","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"afz-restaurant","configurations":{"android":"1:739896266270:android:250937c6451c65717d680f","ios":"1:739896266270:ios:f2c5a8eb294532177d680f","macos":"1:739896266270:ios:f2c5a8eb294532177d680f","web":"1:739896266270:web:041d541a009543217d680f","windows":"1:739896266270:web:d8adb55ec2159e9f7d680f"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "afz-restaurant",
+          "appId": "1:739896266270:android:250937c6451c65717d680f",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "afz-restaurant",
+          "configurations": {
+            "android": "1:739896266270:android:250937c6451c65717d680f",
+            "ios": "1:739896266270:ios:f2c5a8eb294532177d680f",
+            "macos": "1:739896266270:ios:f2c5a8eb294532177d680f",
+            "web": "1:739896266270:web:041d541a009543217d680f",
+            "windows": "1:739896266270:web:d8adb55ec2159e9f7d680f"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
