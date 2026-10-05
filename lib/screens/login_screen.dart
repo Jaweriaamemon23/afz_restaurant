@@ -17,33 +17,34 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
 
   final TextEditingController _emailController = TextEditingController();
+
   final TextEditingController _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // TEMPORARY CUSTOMER ACCESS
-  void _continueAsCustomer() {
-    Navigator.pushAndRemoveUntil(
+  // ============================================================
+  // CONTINUE AS GUEST
+  // ============================================================
+
+  void _continueAsGuest() {
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
-      (route) => false,
+      MaterialPageRoute(
+        builder: (context) => const CustomerHomeScreen(isGuest: true),
+      ),
     );
   }
 
-  // TEMPORARY ADMIN ACCESS
-  void _continueAsAdmin() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
-      (route) => false,
-    );
-  }
+  // ============================================================
+  // LOGIN
+  // ============================================================
 
   Future<void> _login() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
 
+    // Check email
     if (email.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -51,6 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
+    // Check password
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter your password.')),
@@ -63,6 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
+      // Login through AuthService
       final Map<String, dynamic>? userData = await _authService.loginUser(
         email: email,
         password: password,
@@ -74,70 +77,125 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = false;
       });
 
+      // Login failed
       if (userData == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Unable to login. Please try again.')),
+          const SnackBar(
+            content: Text(
+              'Unable to login. Please check your email and password.',
+            ),
+          ),
         );
         return;
       }
 
-      final String role = userData['role']?.toString() ?? 'Customer';
+      // Get role from Firestore
+      final String role = userData['role']?.toString().trim() ?? '';
 
+      // ========================================================
       // CUSTOMER
+      // ========================================================
+
       if (role == 'Customer') {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const CustomerHomeScreen()),
+          MaterialPageRoute(
+            builder: (context) => const CustomerHomeScreen(isGuest: false),
+          ),
           (route) => false,
         );
+
         return;
       }
 
+      // ========================================================
       // RESTAURANT ADMIN
+      // ========================================================
+
       if (role == 'Restaurant Admin') {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
           (route) => false,
         );
+
         return;
       }
 
+      // ========================================================
       // KITCHEN STAFF
+      // ========================================================
+
       if (role == 'Kitchen Staff') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Kitchen dashboard will be connected later.'),
           ),
         );
+
         return;
       }
 
+      // ========================================================
       // DELIVERY DRIVER
+      // ========================================================
+
       if (role == 'Delivery Driver') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Driver dashboard will be connected later.'),
           ),
         );
+
         return;
       }
 
+      // ========================================================
       // UNKNOWN ROLE
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Unknown account role: $role')));
-    } on FirebaseAuthException catch (e) {
+      // ========================================================
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            role.isEmpty
+                ? 'No account role was found.'
+                : 'Unknown account role: $role',
+          ),
+        ),
+      );
+    }
+    // ============================================================
+    // FIREBASE AUTH ERROR
+    // ============================================================
+    on FirebaseAuthException catch (e) {
       if (!mounted) return;
 
       setState(() {
         _isLoading = false;
       });
 
+      String message = 'Login failed.';
+
+      if (e.code == 'user-not-found') {
+        message = 'No account found with this email.';
+      } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
+        message = 'Invalid email or password.';
+      } else if (e.code == 'invalid-email') {
+        message = 'Please enter a valid email address.';
+      } else if (e.code == 'user-disabled') {
+        message = 'This account has been disabled.';
+      } else if (e.message != null && e.message!.isNotEmpty) {
+        message = e.message!;
+      }
+
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(e.message ?? 'Login failed.')));
-    } catch (e) {
+      ).showSnackBar(SnackBar(content: Text(message)));
+    }
+    // ============================================================
+    // OTHER ERROR
+    // ============================================================
+    catch (e) {
       if (!mounted) return;
 
       setState(() {
@@ -152,12 +210,9 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+  // ============================================================
+  // UI
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -165,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Restaurant background
+          // Background image
           Image.network(
             'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1600',
             fit: BoxFit.cover,
@@ -199,10 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.82),
                       borderRadius: BorderRadius.circular(28),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.35),
-                        width: 1,
-                      ),
+                      border: Border.all(color: Colors.white.withOpacity(0.35)),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withOpacity(0.25),
@@ -214,7 +266,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // AFZ Logo
+                        // ==================================================
+                        // AFZ LOGO
+                        // ==================================================
                         Center(
                           child: Container(
                             width: 78,
@@ -248,6 +302,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 22),
 
+                        // ==================================================
+                        // TITLE
+                        // ==================================================
                         const Text(
                           'Welcome to AFZ',
                           textAlign: TextAlign.center,
@@ -271,7 +328,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 28),
 
-                        // Email
+                        // ==================================================
+                        // EMAIL
+                        // ==================================================
                         const Text(
                           'Email',
                           style: TextStyle(
@@ -300,7 +359,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 18),
 
-                        // Password
+                        // ==================================================
+                        // PASSWORD
+                        // ==================================================
                         const Text(
                           'Password',
                           style: TextStyle(
@@ -341,14 +402,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Forgot Password
+                        // ==================================================
+                        // FORGOT PASSWORD
+                        // ==================================================
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: () {
-                              // Firebase password reset
-                              // will be added later.
-                            },
+                            onPressed: () {},
                             child: const Text(
                               'Forgot Password?',
                               style: TextStyle(
@@ -361,7 +421,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 8),
 
-                        // Login
+                        // ==================================================
+                        // LOGIN BUTTON
+                        // ==================================================
                         SizedBox(
                           height: 54,
                           child: ElevatedButton(
@@ -395,7 +457,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 22),
 
-                        // Divider
+                        // ==================================================
+                        // OR DIVIDER
+                        // ==================================================
                         Row(
                           children: [
                             Expanded(
@@ -422,45 +486,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 18),
 
-                        // CUSTOMER BUTTON
+                        // ==================================================
+                        // CONTINUE AS GUEST
+                        // ==================================================
                         SizedBox(
                           height: 52,
                           child: OutlinedButton.icon(
-                            onPressed: _continueAsCustomer,
+                            onPressed: _continueAsGuest,
                             icon: const Icon(
                               Icons.person_outline,
                               color: Color(0xFFFF642F),
                             ),
                             label: const Text(
-                              'Continue as Customer',
-                              style: TextStyle(
-                                color: Color(0xFFFF642F),
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFFF642F)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                              ),
-                              backgroundColor: Colors.white.withOpacity(0.35),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // ADMIN BUTTON
-                        SizedBox(
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            onPressed: _continueAsAdmin,
-                            icon: const Icon(
-                              Icons.admin_panel_settings_outlined,
-                              color: Color(0xFFFF642F),
-                            ),
-                            label: const Text(
-                              'Continue as Admin',
+                              'Continue as Guest',
                               style: TextStyle(
                                 color: Color(0xFFFF642F),
                                 fontWeight: FontWeight.bold,
@@ -478,7 +516,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 20),
 
-                        // Create Account
+                        // ==================================================
+                        // CREATE ACCOUNT
+                        // ==================================================
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -512,8 +552,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 4),
 
+                        // ==================================================
+                        // GUEST INFORMATION
+                        // ==================================================
                         Text(
-                          'You can continue as Customer or Admin for now.',
+                          'Guests can browse the restaurant. '
+                          'Login is required to place an order.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.grey.shade700,

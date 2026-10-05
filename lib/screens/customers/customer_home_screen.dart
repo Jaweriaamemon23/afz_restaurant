@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
-  const CustomerHomeScreen({super.key});
+  // NEW: tells us whether the customer entered as a guest
+  final bool isGuest;
+
+  const CustomerHomeScreen({super.key, this.isGuest = false});
 
   @override
   State<CustomerHomeScreen> createState() => _CustomerHomeScreenState();
@@ -52,10 +55,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         index: selectedIndex,
         children: [
           _homePage(),
+
+          // Menu can be browsed by guest
           _simplePage('Menu', Icons.restaurant_menu_rounded),
-          _simplePage('My Orders', Icons.receipt_long_rounded),
-          _simplePage('Favorites', Icons.favorite_rounded),
-          _simplePage('Profile', Icons.person_rounded),
+
+          // Orders requires login
+          _guestProtectedPage('My Orders', Icons.receipt_long_rounded),
+
+          // Favorites requires login
+          _guestProtectedPage('Favorites', Icons.favorite_rounded),
+
+          // Profile requires login
+          _guestProtectedPage('Profile', Icons.person_rounded),
         ],
       ),
 
@@ -63,16 +74,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         decoration: const BoxDecoration(color: Colors.white),
         child: BottomNavigationBar(
           currentIndex: selectedIndex,
+
           onTap: (index) {
+            // Guest protection
+            if (widget.isGuest && index >= 2) {
+              _showLoginRequiredDialog();
+              return;
+            }
+
             setState(() {
               selectedIndex = index;
             });
           },
+
           type: BottomNavigationBarType.fixed,
           selectedItemColor: const Color(0xFFFF642F),
           unselectedItemColor: Colors.grey,
           backgroundColor: Colors.white,
           elevation: 10,
+
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
@@ -104,6 +124,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // HOME PAGE
+  // ============================================================
 
   Widget _homePage() {
     return SafeArea(
@@ -137,6 +161,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // ============================================================
+  // TOP HEADER
+  // ============================================================
+
   Widget _topHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
@@ -157,7 +185,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                         color: Colors.grey.shade600,
                       ),
                     ),
+
                     const SizedBox(height: 5),
+
                     Row(
                       children: [
                         const Icon(
@@ -165,7 +195,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           size: 17,
                           color: Color(0xFFFF642F),
                         ),
+
                         const SizedBox(width: 4),
+
                         const Text(
                           'Your location',
                           style: TextStyle(
@@ -173,6 +205,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             fontSize: 14,
                           ),
                         ),
+
                         const Icon(Icons.keyboard_arrow_down_rounded, size: 18),
                       ],
                     ),
@@ -181,40 +214,51 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
 
               // Cart
-              Container(
-                width: 45,
-                height: 45,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 12,
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    const Center(
-                      child: Icon(
-                        Icons.shopping_bag_outlined,
-                        color: Color(0xFF222222),
+              GestureDetector(
+                onTap: () {
+                  if (widget.isGuest) {
+                    _showLoginRequiredDialog();
+                    return;
+                  }
+
+                  // Cart action for logged-in customer
+                },
+                child: Container(
+                  width: 45,
+                  height: 45,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 12,
                       ),
-                    ),
-                    Positioned(
-                      top: 7,
-                      right: 7,
-                      child: Container(
-                        width: 9,
-                        height: 9,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFF642F),
-                          shape: BoxShape.circle,
+                    ],
+                  ),
+                  child: Stack(
+                    children: [
+                      const Center(
+                        child: Icon(
+                          Icons.shopping_bag_outlined,
+                          color: Color(0xFF222222),
                         ),
                       ),
-                    ),
-                  ],
+
+                      Positioned(
+                        top: 7,
+                        right: 7,
+                        child: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF642F),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -239,12 +283,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               decoration: InputDecoration(
                 hintText: 'Search for food, dishes...',
                 hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+
                 prefixIcon: const Icon(
                   Icons.search_rounded,
                   color: Color(0xFFFF642F),
                 ),
+
                 suffixIcon: const Icon(Icons.tune_rounded, size: 20),
+
                 border: InputBorder.none,
+
                 contentPadding: const EdgeInsets.symmetric(vertical: 15),
               ),
             ),
@@ -253,6 +301,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // HERO BANNER
+  // ============================================================
 
   Widget _heroBanner() {
     return Container(
@@ -293,9 +345,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 letterSpacing: 2,
               ),
             ),
+
             SizedBox(height: 7),
+
             Text(
-              'Made for your\\ncravings.',
+              'Made for your\ncravings.',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 28,
@@ -303,7 +357,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 fontWeight: FontWeight.w900,
               ),
             ),
+
             SizedBox(height: 15),
+
             Text(
               'Explore delicious meals from AFZ',
               style: TextStyle(color: Colors.white70, fontSize: 12),
@@ -313,6 +369,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // CATEGORIES
+  // ============================================================
 
   Widget _categories() {
     return SizedBox(
@@ -348,7 +408,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     size: 29,
                   ),
                 ),
+
                 const SizedBox(height: 7),
+
                 Text(
                   category['name'],
                   textAlign: TextAlign.center,
@@ -365,6 +427,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // ============================================================
+  // SECTION TITLE
+  // ============================================================
+
   Widget _sectionTitle(String title, String action) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 14),
@@ -375,6 +441,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             title,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
+
           Text(
             action,
             style: const TextStyle(
@@ -387,6 +454,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // POPULAR ITEMS
+  // ============================================================
 
   Widget _popularItems() {
     return SizedBox(
@@ -450,7 +521,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                             size: 16,
                             color: Color(0xFFFFB000),
                           ),
+
                           const SizedBox(width: 3),
+
                           Text(
                             item['rating'],
                             style: const TextStyle(
@@ -458,7 +531,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
+
                           const Spacer(),
+
                           Text(
                             item['price'],
                             style: const TextStyle(
@@ -479,6 +554,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // OFFER BANNER
+  // ============================================================
 
   Widget _offerBanner() {
     return Container(
@@ -507,9 +586,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     letterSpacing: 1.5,
                   ),
                 ),
+
                 SizedBox(height: 7),
+
                 Text(
-                  'Get 20% OFF\\nYour First Order',
+                  'Get 20% OFF\nYour First Order',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 17,
@@ -520,6 +601,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ],
             ),
           ),
+
           Container(
             width: 70,
             height: 70,
@@ -529,7 +611,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             ),
             child: const Center(
               child: Text(
-                '20%\\nOFF',
+                '20%\nOFF',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white,
@@ -544,122 +626,166 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // ============================================================
+  // RECOMMENDED CARD
+  // ============================================================
+
   Widget _recommendedCard() {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(21),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.network(
-              'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500',
-              width: 100,
-              height: 100,
-              fit: BoxFit.cover,
+    return GestureDetector(
+      onTap: () {
+        if (widget.isGuest) {
+          _showLoginRequiredDialog();
+          return;
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 20),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(21),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.network(
+                'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500',
+                width: 100,
+                height: 100,
+                fit: BoxFit.cover,
+              ),
             ),
-          ),
 
-          const SizedBox(width: 13),
+            const SizedBox(width: 13),
 
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Chicken Cheese Pizza',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Recommended based on popular choices',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-                SizedBox(height: 10),
-                Text(
-                  'Rs. 1,450',
-                  style: TextStyle(
-                    color: Color(0xFFFF642F),
-                    fontWeight: FontWeight.w900,
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Chicken Cheese Pizza',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF642F),
-              borderRadius: BorderRadius.circular(13),
+                  SizedBox(height: 6),
+
+                  Text(
+                    'Recommended based on popular choices',
+                    style: TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+
+                  SizedBox(height: 10),
+
+                  Text(
+                    'Rs. 1,450',
+                    style: TextStyle(
+                      color: Color(0xFFFF642F),
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: const Icon(Icons.add, color: Colors.white),
-          ),
-        ],
+
+            GestureDetector(
+              onTap: () {
+                if (widget.isGuest) {
+                  _showLoginRequiredDialog();
+                  return;
+                }
+
+                // Add to cart
+              },
+              child: Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFF642F),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: const Icon(Icons.add, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  // ============================================================
+  // AI ASSISTANT
+  // ============================================================
 
   Widget _aiAssistant() {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF0EA), Color(0xFFFFF8F5)],
+    return GestureDetector(
+      onTap: () {
+        if (widget.isGuest) {
+          _showLoginRequiredDialog();
+          return;
+        }
+      },
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFFF0EA), Color(0xFFFFF8F5)],
+          ),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFFFD6C7)),
         ),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFFFD6C7)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF642F),
-              borderRadius: BorderRadius.circular(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFF642F),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+                size: 25,
+              ),
             ),
-            child: const Icon(
-              Icons.auto_awesome_rounded,
-              color: Colors.white,
-              size: 25,
+
+            const SizedBox(width: 13),
+
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Ask AFZ AI',
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
+                  ),
+
+                  SizedBox(height: 4),
+
+                  Text(
+                    'Need help choosing what to eat?',
+                    style: TextStyle(color: Colors.grey, fontSize: 11),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(width: 13),
-
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Ask AFZ AI',
-                  style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Need help choosing what to eat?',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-              ],
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: Color(0xFFFF642F),
             ),
-          ),
-
-          const Icon(
-            Icons.arrow_forward_ios_rounded,
-            size: 16,
-            color: Color(0xFFFF642F),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
+
+  // ============================================================
+  // NORMAL SIMPLE PAGE
+  // ============================================================
 
   Widget _simplePage(String title, IconData icon) {
     return Center(
@@ -667,13 +793,109 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 70, color: const Color(0xFFFF642F)),
+
           const SizedBox(height: 15),
+
           Text(
             title,
             style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
           ),
         ],
       ),
+    );
+  }
+
+  // ============================================================
+  // GUEST PROTECTED PAGE
+  // ============================================================
+
+  Widget _guestProtectedPage(String title, IconData icon) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 70, color: const Color(0xFFFF642F)),
+
+          const SizedBox(height: 15),
+
+          Text(
+            title,
+            style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w800),
+          ),
+
+          const SizedBox(height: 10),
+
+          if (widget.isGuest)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Please login or create an account to access this feature.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ============================================================
+  // LOGIN REQUIRED DIALOG
+  // ============================================================
+
+  void _showLoginRequiredDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+
+          title: const Text(
+            'Login Required',
+            style: TextStyle(fontWeight: FontWeight.w900),
+          ),
+
+          content: const Text(
+            'You are browsing as a guest. Please login or create an account to continue.',
+            style: TextStyle(color: Colors.grey, height: 1.4),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+
+                // IMPORTANT:
+                // Change '/login' only if your LoginScreen
+                // uses a different route name.
+                Navigator.pushNamed(context, '/login');
+              },
+
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFFF642F),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+
+              child: const Text(
+                'Login',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_services.dart';
-import 'package:flutter/material.dart';
-import '../services/auth_services.dart';
 import 'email_verification_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -32,15 +30,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     'Kitchen Staff',
     'Delivery Driver',
   ];
-
-  @override
-  void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmPasswordController.dispose();
-    super.dispose();
-  }
 
   Future<void> register() async {
     if (nameController.text.trim().isEmpty) {
