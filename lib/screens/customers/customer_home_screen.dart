@@ -3,6 +3,9 @@ import '../login_screen.dart';
 import 'customer_menu_screen.dart';
 import 'customer_favorites_screen.dart';
 import 'customer_profile_screen.dart';
+import '../my_orders_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../services/customer_data_service.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   final bool isGuest;
@@ -347,6 +350,79 @@ class _AFZAIChatState extends State<_AFZAIChat> {
 
 class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int selectedIndex = 0;
+  bool _customerDataLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedCustomerData();
+  }
+
+  Future<void> _loadSavedCustomerData() async {
+    if (widget.isGuest || FirebaseAuth.instance.currentUser == null) {
+      return;
+    }
+
+    try {
+      final data = await CustomerDataService.instance.loadCustomerData();
+
+      if (!mounted) return;
+
+      setState(() {
+        cartItems
+          ..clear()
+          ..addAll(
+            (data['cartItems'] as List).map(
+              (item) => Map<String, dynamic>.from(item),
+            ),
+          );
+
+        favoriteItems
+          ..clear()
+          ..addAll(
+            (data['favoriteItems'] as List).map(
+              (item) => Map<String, dynamic>.from(item),
+            ),
+          );
+
+        _customerDataLoaded = true;
+      });
+    } catch (e) {
+      print('Error loading saved customer data: $e');
+    }
+  }
+
+  Future<void> _saveCart() async {
+    if (widget.isGuest ||
+        FirebaseAuth.instance.currentUser == null ||
+        !_customerDataLoaded) {
+      return;
+    }
+
+    try {
+      await CustomerDataService.instance.saveCart(
+        cartItems.map((item) => Map<String, dynamic>.from(item)).toList(),
+      );
+    } catch (e) {
+      print('Error saving cart: $e');
+    }
+  }
+
+  Future<void> _saveFavorites() async {
+    if (widget.isGuest ||
+        FirebaseAuth.instance.currentUser == null ||
+        !_customerDataLoaded) {
+      return;
+    }
+
+    try {
+      await CustomerDataService.instance.saveFavorites(
+        favoriteItems.map((item) => Map<String, dynamic>.from(item)).toList(),
+      );
+    } catch (e) {
+      print('Error saving favorites: $e');
+    }
+  }
 
   final List<Map<String, dynamic>> cartItems = [];
   final List<Map<String, dynamic>> favoriteItems = [];
@@ -830,31 +906,44 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       body: IndexedStack(
         index: selectedIndex,
         children: [
+          // TAB 1: HOME
           _homePage(),
 
+          // TAB 2: MENU
           CustomerMenuScreen(
             isGuest: widget.isGuest,
             favoriteItems: favoriteItems,
             onFavoritesChanged: () {
+              if (!mounted) return;
               setState(() {});
+              _saveFavorites();
             },
             cartItems: cartItems,
             onCartChanged: () {
+              if (!mounted) return;
               setState(() {});
+              _saveCart();
             },
           ),
 
-          _guestProtectedPage('My Orders', Icons.receipt_long_rounded),
+          // TAB 3: ORDERS
+          widget.isGuest
+              ? _guestProtectedPage('Orders', Icons.receipt_long_rounded)
+              : MyOrdersScreen(),
 
+          // TAB 4: FAVORITES
           widget.isGuest
               ? _guestProtectedPage('Favorites', Icons.favorite_rounded)
               : CustomerFavoritesScreen(
                   favoriteItems: favoriteItems,
                   onFavoritesChanged: () {
+                    if (!mounted) return;
                     setState(() {});
+                    _saveFavorites();
                   },
                 ),
 
+          // TAB 5: PROFILE
           widget.isGuest
               ? _guestProtectedPage('Profile', Icons.person_rounded)
               : const CustomerProfileScreen(),
@@ -867,6 +956,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           currentIndex: selectedIndex,
 
           onTap: (index) {
+            // Guests can access Home and Menu only.
             if (widget.isGuest && index >= 2) {
               _showLoginRequiredDialog();
               return;
@@ -1491,6 +1581,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           GestureDetector(
             onTap: () {
               _addToCart(item);
+              _saveCart();
             },
             child: Container(
               width: 38,

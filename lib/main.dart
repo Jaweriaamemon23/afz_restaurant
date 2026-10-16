@@ -3,11 +3,14 @@ import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
 import 'screens/splash screen.dart';
+import 'services/notification_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await NotificationService.instance.initialize();
 
   runApp(const AFZRestaurantApp());
 }
@@ -24,6 +27,7 @@ class AFZRestaurantApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFFF642F)),
         useMaterial3: true,
       ),
+      navigatorKey: appNavigatorKey,
       home: const SplashScreen(),
     );
   }
